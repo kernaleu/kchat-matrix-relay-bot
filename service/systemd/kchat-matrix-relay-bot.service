@@ -1,0 +1,11 @@
+[Unit]
+Description=kChat Matrix relay bot
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/var/lib/kchat/kchat-matrix-relay-bot/kchat-matrix-relay-bot
+
+[Install]
+WantedBy=multi-user.target
