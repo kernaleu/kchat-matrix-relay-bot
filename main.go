@@ -14,23 +14,25 @@ import (
 )
 
 const (
-	matrixToken = ""
+	matrixToken    = ""
 	matrixEndpoint = ""
 
-	kchatAddr = "localhost:1337"
-	kchatUser = "matrix_bridge"
-	kchatPass = ""
+	kchatAddr   = "localhost:1337"
+	kchatUser   = "matrix_bridge"
+	kchatPass   = ""
+	captchaText = "kchat-connect"
 )
 
 type message struct {
 	MsgType string `json:"msgtype"`
-	Body string `json:"body"`
+	Body    string `json:"body"`
 }
 
 var R *regexp.Regexp
 
 func authenticate(conn net.Conn, user, pass string) {
-	fmt.Fprintln(conn, "/login " + user + " " + pass)
+	fmt.Fprintln(conn, captchaText)
+	fmt.Fprintln(conn, "/login "+user+" "+pass)
 }
 
 func handleMessage(conn net.Conn) {
@@ -38,14 +40,14 @@ func handleMessage(conn net.Conn) {
 		msg, err := bufio.NewReader(conn).ReadString('\n')
 		if err != nil {
 			log.Println("Receive error")
-			break;
+			break
 		}
 		log.Println("Received:", msg)
 		if R.MatchString(msg) {
 			res := R.FindStringSubmatch(msg)
 			fmt.Println(res[1] + ": " + res[2])
 			text := fmt.Sprintf("%s: %s", res[1], res[2])
-			sendMessage(text);
+			sendMessage(text)
 		}
 	}
 }
@@ -53,13 +55,13 @@ func handleMessage(conn net.Conn) {
 func sendMessage(msg string) {
 	m := message{
 		MsgType: "m.text",
-		Body: msg,
+		Body:    msg,
 	}
 	j, _ := json.Marshal(m)
 	p, _ := rand.Prime(rand.Reader, 64)
 	req, _ := http.NewRequest(http.MethodPut,
-	    matrixEndpoint + p.String(), bytes.NewBuffer(j))
-	req.Header.Set("Authorization", "Bearer " + matrixToken)
+		matrixEndpoint+p.String(), bytes.NewBuffer(j))
+	req.Header.Set("Authorization", "Bearer "+matrixToken)
 	client := &http.Client{}
 	_, err := client.Do(req)
 	if err != nil {
